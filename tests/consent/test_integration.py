@@ -28,7 +28,7 @@ def test_unknown_sender_gets_rejection(mock_get_sb):
 @patch("main.get_supabase")
 def test_registered_sender_gets_consent_prompt(mock_get_sb):
     mock_get_sb.return_value = _mock_supabase_with_state(
-        {"consent_status": "registered", "language": "en"}
+        {"consent_status": "registered", "language_pref": "en"}
     )
     from main import app
     client = TestClient(app)
@@ -41,7 +41,7 @@ def test_registered_sender_gets_consent_prompt(mock_get_sb):
 @patch("main.run_ai_query")
 def test_active_sender_gets_ai_response(mock_ai, mock_get_sb):
     mock_get_sb.return_value = _mock_supabase_with_state(
-        {"consent_status": "active", "language": "en"}
+        {"consent_status": "active", "language_pref": "en"}
     )
     mock_ai.return_value = "The event starts at 9am."
     from main import app
@@ -54,7 +54,7 @@ def test_active_sender_gets_ai_response(mock_ai, mock_get_sb):
 @patch("main.get_supabase")
 def test_active_sender_opts_out(mock_get_sb):
     mock_get_sb.return_value = _mock_supabase_with_state(
-        {"consent_status": "active", "language": "fr"}
+        {"consent_status": "active", "language_pref": "fr"}
     )
     from main import app
     client = TestClient(app)

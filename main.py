@@ -40,7 +40,7 @@ async def reply(request: Request, Body: str = Form()):
     elif result["action"] == "activate":
         # User just consented — send welcome-back in their language
         state = resolve_consent_state(supabase, hash_phone_number(phone))
-        lang = state.get("language", "fr") if state else "fr"
+        lang = state.get("language_pref", "fr") if state else "fr"
         response_text = get_message("welcome_back", lang)
     else:
         response_text = result["reply"]

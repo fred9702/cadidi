@@ -13,7 +13,7 @@ def resolve_consent_state(supabase: Client, phone_hash: str) -> dict | None:
     """Look up a phone hash in the registration table. Returns row dict or None."""
     result = (
         supabase.table(REGISTRATION_TABLE)
-        .select("consent_status, language")
+        .select("consent_status, language_pref")
         .eq("phone_hash", phone_hash)
         .execute()
     )
@@ -46,7 +46,7 @@ def process_message(supabase: Client, phone: str, body: str) -> dict:
         return {"action": "reject", "reply": get_message("unknown", "fr")}
 
     status = state["consent_status"]
-    lang = state.get("language", "fr")
+    lang = state.get("language_pref", "fr")
 
     # Registered — awaiting consent
     if status == "registered":
