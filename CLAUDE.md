@@ -45,11 +45,18 @@ python vector_store.py
 python local_loader.py
 ```
 
-No formal test framework is configured. Testing is done via module-level main blocks.
+```bash
+# Run tests
+pytest -v
+```
+
+Legacy modules also have `if __name__ == '__main__'` blocks for standalone testing.
 
 ## Environment Variables
 
-**Target (new architecture):** `ANTHROPIC_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `SUPABASE_URL`, `SUPABASE_KEY`.
+**Active:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_NUMBER`, `SUPABASE_URL`, `SUPABASE_KEY`. See `.env.example`.
+
+**Upcoming (WA-B04):** `ANTHROPIC_API_KEY`.
 
 **Legacy (forked repo):** `OPENAI_API_KEY`, `HUGGINGFACEHUB_API_TOKEN`, `DB_USER`, `DB_PASSWORD`.
 
