@@ -58,3 +58,7 @@ unstructured.pytesseract
 watchdog
 watchfiles
 python-decouple
+supabase
+pytest
+pytest-asyncio
+httpx
