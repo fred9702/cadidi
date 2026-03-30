@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 account_sid = config("TWILIO_ACCOUNT_SID")
 auth_token = config("TWILIO_AUTH_TOKEN")
 twilio_number = config("TWILIO_WHATSAPP_NUMBER")
+messaging_service_sid = config("TWILIO_MESSAGING_SERVICE_SID")
 twilio_client = Client(account_sid, auth_token)
 
 app = FastAPI()
@@ -28,9 +29,9 @@ def run_ai_query(message: str) -> str:
 
 
 def send_whatsapp(to: str, body: str) -> None:
-    """Send a WhatsApp message via Twilio REST API."""
+    """Send a WhatsApp message via Twilio Messaging Service."""
     twilio_client.messages.create(
-        from_=f"whatsapp:{twilio_number}",
+        messaging_service_sid=messaging_service_sid,
         to=f"whatsapp:{to}",
         body=body,
     )
