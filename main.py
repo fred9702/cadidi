@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Twilio config
 account_sid = config("TWILIO_ACCOUNT_SID")
 auth_token = config("TWILIO_AUTH_TOKEN")
-twilio_number = config("TWILIO_NUMBER")
+twilio_number = config("TWILIO_WHATSAPP_NUMBER")
 twilio_client = Client(account_sid, auth_token)
 
 app = FastAPI()
