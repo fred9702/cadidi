@@ -1,69 +1,58 @@
-# Third-party imports
-from fastapi import FastAPI, Form, Depends, Request
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-from twilio.rest import Client
-from twilio.twiml.messaging_response import MessagingResponse
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import PlainTextResponse
+from twilio.twiml.messaging_response import MessagingResponse
 from decouple import config
 
-# Find your Account SID and Auth Token at twilio.com/console
-# and set the environment variables. See http://twil.io/secure
+from app.supabase_client import get_supabase
+from app.consent.state_machine import process_message
+from app.consent.messages import get_message
+from app.consent.hashing import hash_phone_number
+from app.consent.state_machine import resolve_consent_state
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Twilio config
 account_sid = config("TWILIO_ACCOUNT_SID")
 auth_token = config("TWILIO_AUTH_TOKEN")
-openai_api_key = config("OPENAI_API_KEY")
-client = Client(account_sid, auth_token)
-twilio_number = config('TWILIO_NUMBER')
-
-# Internal imports
-from models import Conversation, SessionLocal
-from utils import logger, run_rag_query
-import logging
+twilio_number = config("TWILIO_NUMBER")
 
 app = FastAPI()
 
-# Dependency
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+
+def run_ai_query(message: str) -> str:
+    """Placeholder for Claude AI integration (WA-B04). Returns AI response."""
+    return f"[AI placeholder] You asked: {message}"
+
 
 @app.post("/message")
-async def reply(request: Request, Body: str = Form(), db: Session = Depends(get_db)):
-    logger.info('Senging WhatsApp Mesage')
-    # Extract the phone number from the incoming webhook request
+async def reply(request: Request, Body: str = Form()):
     form_data = await request.form()
-    whatsapp_number = form_data['From'].split("whatsapp:")[-1]
-    print(f"Sending the LangChain response to this number: {whatsapp_number}")
+    phone = form_data["From"].split("whatsapp:")[-1]
 
-    # Get the generated text from the LangChain agent
-    langchain_response = run_rag_query(Body)
-    
-    # Store the conversation in the database
-    try:
-        conversation = Conversation(
-            sender=whatsapp_number,
-            message=Body,
-            response=langchain_response
-            )
-        db.add(conversation)
-        db.commit()
-        logger.info(f"Conversation #{conversation.id} stored in database")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Error storing conversation in database: {e}")
-    
-    # Now send the message
-    try:
-        response = MessagingResponse()
-        msg = response.message()
-        msg.body(langchain_response)
-        xml_response = str(response)
-        logging.info(f"Outgoing response: {xml_response}")
-        return PlainTextResponse(xml_response, media_type="application/xml")
-    except Exception as e:
-        logger.error(f"Error sending message to {whatsapp_number}: {e}")
-        return PlainTextResponse("Error processing request", status_code=500)
+    supabase = get_supabase()
+    result = process_message(supabase, phone, Body)
 
+    # Determine response text
+    if result["action"] == "forward_to_ai":
+        response_text = run_ai_query(Body)
+    elif result["action"] == "activate":
+        # User just consented — send welcome-back in their language
+        state = resolve_consent_state(supabase, hash_phone_number(phone))
+        lang = state.get("language", "fr") if state else "fr"
+        response_text = get_message("welcome_back", lang)
+    else:
+        response_text = result["reply"]
+
+    # Build Twilio XML response
+    twilio_response = MessagingResponse()
+    twilio_response.message(response_text)
+    xml = str(twilio_response)
+    logger.info(f"Response to {phone[:6]}***: {result['action']}")
+    return PlainTextResponse(xml, media_type="application/xml")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
