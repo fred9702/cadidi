@@ -1,4 +1,4 @@
-REGISTRATION_LINK = "https://chomei.store/register"
+REGISTRATION_LINK = "https://resilience241.com/register"
 
 MESSAGES = {
     "unknown": {
