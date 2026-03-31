@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from supabase import Client
 
-from app.consent.hashing import hash_phone_number
+from app.consent.hashing import hash_phone_number, hash_email
 from app.consent.triggers import match_trigger
 from app.consent.messages import get_message
 
@@ -22,10 +22,23 @@ def resolve_consent_state(supabase: Client, phone_hash: str) -> dict | None:
     return None
 
 
-def _update_consent(supabase: Client, phone_hash: str, updates: dict) -> None:
+def resolve_consent_state_by_email(supabase: Client, email_hash: str) -> dict | None:
+    """Look up an email hash in the registration table. Returns row dict or None."""
+    result = (
+        supabase.table(REGISTRATION_TABLE)
+        .select("consent_status, language_pref, phone_hash")
+        .eq("email_hash", email_hash)
+        .execute()
+    )
+    if result.data:
+        return result.data[0]
+    return None
+
+
+def _update_consent(supabase: Client, key_value: str, updates: dict, key_column: str = "phone_hash") -> None:
     """Update consent fields on the registration table."""
     supabase.table(REGISTRATION_TABLE).update(updates).eq(
-        "phone_hash", phone_hash
+        key_column, key_value
     ).execute()
 
 
@@ -39,11 +52,20 @@ def process_message(supabase: Client, phone: str, body: str) -> dict:
     """
     phone_hash = hash_phone_number(phone)
     state = resolve_consent_state(supabase, phone_hash)
-    trigger = match_trigger(body)
+    trigger_result = match_trigger(body)
+    trigger = trigger_result["trigger"]
+    email = trigger_result["email"]
 
-    # Unknown sender
+    # Unknown sender — try email fallback
     if state is None:
-        return {"action": "reject", "reply": get_message("unknown", "fr")}
+        if email:
+            email_h = hash_email(email)
+            state = resolve_consent_state_by_email(supabase, email_h)
+            if state is not None:
+                # Link this WhatsApp number to the registration for future lookups
+                _update_consent(supabase, email_h, {"phone_hash": phone_hash}, key_column="email_hash")
+        if state is None:
+            return {"action": "reject", "reply": get_message("unknown", "fr")}
 
     status = state["consent_status"]
     lang = state.get("language_pref", "fr")
