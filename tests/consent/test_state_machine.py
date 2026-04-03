@@ -58,6 +58,7 @@ def test_process_active_normal_message():
     sb = _mock_supabase(row={"consent_status": "active", "language_pref": "en"})
     result = process_message(sb, "+447700900000", "What is the event schedule?")
     assert result["action"] == "forward_to_ai"
+    assert result["language"] == "en"
 
 
 def test_process_active_opt_out():

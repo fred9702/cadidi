@@ -90,7 +90,7 @@ def process_message(supabase: Client, phone: str, body: str) -> dict:
                 "consent_revoked_at": now,
             })
             return {"action": "opt_out", "reply": get_message("opted_out", lang)}
-        return {"action": "forward_to_ai", "reply": None}
+        return {"action": "forward_to_ai", "reply": None, "language": lang}
 
     # Opted out
     if status == "opted_out":
