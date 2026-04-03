@@ -8,6 +8,9 @@ from app.consent.state_machine import process_message
 from app.consent.messages import get_message
 from app.consent.hashing import hash_phone_number
 from app.consent.state_machine import resolve_consent_state
+from app.ai.conversations import get_or_create_conversation
+from app.ai.history import save_message, load_history
+from app.ai.client import get_ai_response
 
 import logging
 
@@ -21,11 +24,6 @@ messaging_service_sid = config("TWILIO_MESSAGING_SERVICE_SID")
 twilio_client = Client(account_sid, auth_token)
 
 app = FastAPI()
-
-
-def run_ai_query(message: str) -> str:
-    """Placeholder for Claude AI integration (WA-B04). Returns AI response."""
-    return f"[AI placeholder] You asked: {message}"
 
 
 def send_whatsapp(to: str, body: str) -> None:
@@ -47,7 +45,13 @@ async def reply(request: Request, Body: str = Form()):
 
     # Determine response text
     if result["action"] == "forward_to_ai":
-        response_text = run_ai_query(Body)
+        phone_hash = hash_phone_number(phone)
+        lang = result["language"]
+        conv = get_or_create_conversation(supabase, phone_hash, lang)
+        save_message(supabase, conv["id"], "user", Body)
+        history = load_history(supabase, conv["id"])
+        response_text = get_ai_response(history, lang)
+        save_message(supabase, conv["id"], "assistant", response_text)
     elif result["action"] == "activate":
         state = resolve_consent_state(supabase, hash_phone_number(phone))
         lang = state.get("language_pref", "fr") if state else "fr"

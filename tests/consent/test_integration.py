@@ -43,11 +43,16 @@ def test_registered_sender_gets_consent_prompt(mock_get_sb, mock_send):
 
 @patch("main.send_whatsapp")
 @patch("main.get_supabase")
-@patch("main.run_ai_query")
-def test_active_sender_gets_ai_response(mock_ai, mock_get_sb, mock_send):
+@patch("main.get_ai_response")
+@patch("main.save_message")
+@patch("main.load_history")
+@patch("main.get_or_create_conversation")
+def test_active_sender_gets_ai_response(mock_conv, mock_history, mock_save, mock_ai, mock_get_sb, mock_send):
     mock_get_sb.return_value = _mock_supabase_with_state(
         {"consent_status": "active", "language_pref": "en"}
     )
+    mock_conv.return_value = {"id": "conv-123", "language": "en"}
+    mock_history.return_value = [{"role": "user", "content": "When does it start?"}]
     mock_ai.return_value = "The event starts at 9am."
     from main import app
     client = TestClient(app)
