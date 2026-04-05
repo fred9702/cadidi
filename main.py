@@ -10,12 +10,14 @@ from app.consent.state_machine import resolve_consent_state
 from app.ai.conversations import get_or_create_conversation
 from app.ai.history import save_message, load_history
 from app.ai.client import get_ai_response
+from app.broadcast.router import router as broadcast_router
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+app.include_router(broadcast_router)
 
 
 @app.post("/message")
