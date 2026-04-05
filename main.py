@@ -1,9 +1,8 @@
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import Response
-from twilio.rest import Client
-from decouple import config
 
 from app.supabase_client import get_supabase
+from app.twilio_client import send_whatsapp
 from app.consent.state_machine import process_message
 from app.consent.messages import get_message
 from app.consent.hashing import hash_phone_number
@@ -16,23 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Twilio config
-account_sid = config("TWILIO_ACCOUNT_SID")
-auth_token = config("TWILIO_AUTH_TOKEN")
-twilio_number = config("TWILIO_WHATSAPP_NUMBER")
-messaging_service_sid = config("TWILIO_MESSAGING_SERVICE_SID")
-twilio_client = Client(account_sid, auth_token)
-
 app = FastAPI()
-
-
-def send_whatsapp(to: str, body: str) -> None:
-    """Send a WhatsApp message via Twilio Messaging Service."""
-    twilio_client.messages.create(
-        messaging_service_sid=messaging_service_sid,
-        to=f"whatsapp:{to}",
-        body=body,
-    )
 
 
 @app.post("/message")
