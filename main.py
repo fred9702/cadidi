@@ -10,6 +10,7 @@ from app.consent.state_machine import resolve_consent_state
 from app.ai.conversations import get_or_create_conversation
 from app.ai.history import save_message, load_history
 from app.ai.client import get_ai_response
+from app.rate_limit import check_rate_limit, rate_limit_message
 from app.broadcast.router import router as broadcast_router
 
 import logging
@@ -32,11 +33,16 @@ async def reply(request: Request, Body: str = Form()):
     if result["action"] == "forward_to_ai":
         phone_hash = hash_phone_number(phone)
         lang = result["language"]
-        conv = get_or_create_conversation(supabase, phone_hash, lang)
-        save_message(supabase, conv["id"], "user", Body)
-        history = load_history(supabase, conv["id"])
-        response_text = get_ai_response(history, lang)
-        save_message(supabase, conv["id"], "assistant", response_text)
+
+        # Rate limit check — before calling Claude API
+        if not check_rate_limit(phone_hash):
+            response_text = rate_limit_message(lang)
+        else:
+            conv = get_or_create_conversation(supabase, phone_hash, lang)
+            save_message(supabase, conv["id"], "user", Body)
+            history = load_history(supabase, conv["id"])
+            response_text = get_ai_response(history, lang)
+            save_message(supabase, conv["id"], "assistant", response_text)
     elif result["action"] == "activate":
         state = resolve_consent_state(supabase, hash_phone_number(phone))
         lang = state.get("language_pref", "fr") if state else "fr"
