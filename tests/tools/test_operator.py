@@ -4,8 +4,8 @@ import os
 # Add project root to path so tools/ is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from unittest.mock import MagicMock
-from tools.operator import fetch_open_escalations, fetch_conversation_history
+from unittest.mock import patch, MagicMock
+from tools.operator import fetch_open_escalations, fetch_conversation_history, draft_response
 
 
 def _mock_supabase():
@@ -82,3 +82,43 @@ def test_fetch_conversation_history():
     assert len(result) == 2
     assert result[0]["role"] == "user"
     assert result[1]["role"] == "assistant"
+
+
+def test_draft_response_calls_claude():
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(type="text", text="Bonjour, je vais vous aider.")]
+    mock_client.messages.create.return_value = mock_response
+
+    history = [
+        {"role": "user", "content": "J'ai besoin d'aide", "created_at": "2026-04-17T10:00:00Z"},
+    ]
+
+    result = draft_response(mock_client, history, "VIP logistics", "fr")
+    assert result == "Bonjour, je vais vous aider."
+
+    call_kwargs = mock_client.messages.create.call_args[1]
+    assert call_kwargs["model"] == "claude-sonnet-4-6"
+    assert call_kwargs["max_tokens"] == 512
+    assert "VIP logistics" in call_kwargs["messages"][0]["content"]
+
+
+def test_draft_response_includes_history():
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(type="text", text="Response")]
+    mock_client.messages.create.return_value = mock_response
+
+    history = [
+        {"role": "user", "content": "Hello", "created_at": "2026-04-17T10:00:00Z"},
+        {"role": "assistant", "content": "Hi", "created_at": "2026-04-17T10:00:05Z"},
+        {"role": "user", "content": "Help me", "created_at": "2026-04-17T10:00:10Z"},
+    ]
+
+    draft_response(mock_client, history, "General help", "en")
+
+    call_kwargs = mock_client.messages.create.call_args[1]
+    user_msg = call_kwargs["messages"][0]["content"]
+    assert "Hello" in user_msg
+    assert "Hi" in user_msg
+    assert "Help me" in user_msg
