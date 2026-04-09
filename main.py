@@ -13,6 +13,8 @@ from app.ai.client import get_ai_response
 from app.rate_limit import check_rate_limit, rate_limit_message
 from app.broadcast.router import router as broadcast_router
 from app.escalation.router import router as escalation_router
+from app.escalation.detector import parse_response
+from app.escalation.manager import create_escalation, get_open_escalation
 
 import logging
 
@@ -42,13 +44,30 @@ async def reply(request: Request, Body: str = Form()):
         else:
             conv = get_or_create_conversation(supabase, phone_hash, lang)
             save_message(supabase, conv["id"], "user", Body)
-            history = load_history(supabase, conv["id"])
-            response_text = get_ai_response(history, lang)
-            save_message(supabase, conv["id"], "assistant", response_text)
-    elif result["action"] == "activate":
+
+            # Check for open escalation — skip Claude, send holding message
+            if get_open_escalation(supabase, phone_hash):
+                response_text = get_message("escalation_holding", lang)
+            else:
+                history = load_history(supabase, conv["id"])
+                raw_response = get_ai_response(history, lang)
+                parsed = parse_response(raw_response)
+
+                if parsed["escalated"]:
+                    create_escalation(
+                        supabase,
+                        conversation_id=conv["id"],
+                        phone_hash=phone_hash,
+                        reason=parsed["reason"],
+                        user_message=Body,
+                    )
+
+                response_text = parsed["reply"]
+                save_message(supabase, conv["id"], "assistant", response_text)
+    elif result["action"] in ("activate", "rejoin"):
         state = resolve_consent_state(supabase, hash_phone_number(phone))
         lang = state.get("language_pref", "fr") if state else "fr"
-        response_text = get_message("welcome_back", lang)
+        response_text = get_message("welcome_menu", lang)
     else:
         response_text = result["reply"]
 
