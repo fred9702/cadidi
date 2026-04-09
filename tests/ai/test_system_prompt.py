@@ -20,6 +20,23 @@ def test_system_prompt_english_instruction():
     assert "English" in prompt or "english" in prompt
 
 
-def test_system_prompt_contains_knowledge_base_placeholder():
+def test_system_prompt_contains_kb_content():
     prompt = get_system_prompt("fr")
-    assert "KNOWLEDGE BASE" in prompt.upper() or "knowledge base" in prompt.lower()
+    # From PROGRAMME_KB.md
+    assert "Cité de la Démocratie" in prompt
+    # From CAP241_KB.md
+    assert "CAP 241" in prompt
+    assert "EQUILIBRES" in prompt
+    # From BuildingResilience_KB.md
+    assert "Fondation Ma Bannière" in prompt
+
+
+def test_system_prompt_contains_escalation_instructions():
+    prompt = get_system_prompt("fr")
+    assert "[ESCALATE]" in prompt
+    assert "[REASON:" in prompt
+
+
+def test_system_prompt_correct_oaflad_name():
+    prompt = get_system_prompt("fr")
+    assert "Premières Dames" in prompt or "First Ladies" in prompt
