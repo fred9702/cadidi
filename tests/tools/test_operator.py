@@ -5,7 +5,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from unittest.mock import patch, MagicMock
-from tools.operator import fetch_open_escalations, fetch_conversation_history, draft_response
+import httpx
+from tools.operator import fetch_open_escalations, fetch_conversation_history, draft_response, send_response, resolve_escalation
 
 
 def _mock_supabase():
@@ -122,3 +123,72 @@ def test_draft_response_includes_history():
     assert "Hello" in user_msg
     assert "Hi" in user_msg
     assert "Help me" in user_msg
+
+
+def test_send_response_success():
+    with patch("tools.operator.httpx.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"status": "sent"}
+        mock_resp.raise_for_status = MagicMock()
+        mock_post.return_value = mock_resp
+
+        success, detail = send_response(
+            "http://localhost:8000", "test-key", "+241060000001", "Hello"
+        )
+        assert success is True
+        assert detail == {"status": "sent"}
+
+        mock_post.assert_called_once_with(
+            "http://localhost:8000/respond",
+            json={"phone": "+241060000001", "message": "Hello"},
+            headers={"Authorization": "Bearer test-key"},
+            timeout=30,
+        )
+
+
+def test_send_response_failure():
+    with patch("tools.operator.httpx.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_resp.json.return_value = {"detail": "No active conversation"}
+        mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "404", request=MagicMock(), response=mock_resp
+        )
+        mock_post.return_value = mock_resp
+
+        success, detail = send_response(
+            "http://localhost:8000", "test-key", "+241060000001", "Hello"
+        )
+        assert success is False
+
+
+def test_resolve_escalation_success():
+    with patch("tools.operator.httpx.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"status": "resolved"}
+        mock_resp.raise_for_status = MagicMock()
+        mock_post.return_value = mock_resp
+
+        success, detail = resolve_escalation(
+            "http://localhost:8000", "test-key", "+241060000001"
+        )
+        assert success is True
+        assert detail == {"status": "resolved"}
+
+
+def test_resolve_escalation_failure():
+    with patch("tools.operator.httpx.post") as mock_post:
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_resp.json.return_value = {"detail": "No open escalation"}
+        mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "404", request=MagicMock(), response=mock_resp
+        )
+        mock_post.return_value = mock_resp
+
+        success, detail = resolve_escalation(
+            "http://localhost:8000", "test-key", "+241060000001"
+        )
+        assert success is False

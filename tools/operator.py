@@ -1,6 +1,7 @@
 """Operator agent CLI — manage escalated WhatsApp conversations with Claude-assisted drafts."""
 
 import anthropic
+import httpx
 from supabase import Client
 
 
@@ -101,3 +102,41 @@ def draft_response(
     return next(
         (block.text for block in response.content if block.type == "text"), ""
     )
+
+
+def send_response(
+    api_url: str, api_key: str, phone: str, message: str
+) -> tuple[bool, dict]:
+    """Send a human response via POST /respond. Returns (success, response_json)."""
+    try:
+        resp = httpx.post(
+            f"{api_url}/respond",
+            json={"phone": phone, "message": message},
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return True, resp.json()
+    except httpx.HTTPStatusError as e:
+        return False, e.response.json() if e.response else {"detail": str(e)}
+    except httpx.RequestError as e:
+        return False, {"detail": f"Connection error: {e}"}
+
+
+def resolve_escalation(
+    api_url: str, api_key: str, phone: str
+) -> tuple[bool, dict]:
+    """Resolve an escalation via POST /resolve. Returns (success, response_json)."""
+    try:
+        resp = httpx.post(
+            f"{api_url}/resolve",
+            json={"phone": phone},
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return True, resp.json()
+    except httpx.HTTPStatusError as e:
+        return False, e.response.json() if e.response else {"detail": str(e)}
+    except httpx.RequestError as e:
+        return False, {"detail": f"Connection error: {e}"}
