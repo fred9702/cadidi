@@ -71,6 +71,40 @@ MESSAGES = {
             "#BuildingResilience foi reativado. Como posso ajudá-lo/a?"
         ),
     },
+    "welcome_menu": {
+        "fr": (
+            "Bienvenue ! Je suis votre assistant IA pour "
+            "#BuildingResilience.\n\n"
+            "Comment puis-je vous aider ? Par exemple :\n"
+            "1) La campagne #BuildingResilience\n"
+            "2) Le cadre CAP 241\n"
+            "3) La Fondation Ma Bannière\n"
+            "4) Le programme de l'événement\n"
+            "5) L'OAFLAD/OPDAD\n\n"
+            "Vous pouvez aussi poser n'importe quelle question librement."
+        ),
+        "en": (
+            "Welcome! I'm your AI assistant for "
+            "#BuildingResilience.\n\n"
+            "How can I help you? For example:\n"
+            "1) The #BuildingResilience campaign\n"
+            "2) The CAP 241 framework\n"
+            "3) The Ma Bannière Foundation\n"
+            "4) The event programme\n"
+            "5) OAFLAD/OPDAD\n\n"
+            "You can also ask any question freely."
+        ),
+    },
+    "escalation_holding": {
+        "fr": (
+            "Votre demande est prise en charge par l'équipe organisatrice. "
+            "Vous recevrez une réponse prochainement dans cette conversation."
+        ),
+        "en": (
+            "Your request is being handled by the organising team. "
+            "You'll receive a response shortly in this conversation."
+        ),
+    },
 }
 
 

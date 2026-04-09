@@ -49,3 +49,32 @@ def test_welcome_back_en():
 def test_unknown_language_falls_back_to_fr():
     msg = get_message("consent_prompt", "xx")
     assert "Répondez OUI" in msg
+
+
+def test_welcome_menu_french():
+    msg = get_message("welcome_menu", "fr")
+    assert "BuildingResilience" in msg
+    assert "CAP 241" in msg
+    assert "Fondation Ma Bannière" in msg or "Ma Bannière" in msg
+
+
+def test_welcome_menu_english():
+    msg = get_message("welcome_menu", "en")
+    assert "BuildingResilience" in msg
+    assert "CAP 241" in msg
+
+
+def test_welcome_menu_falls_back_to_french():
+    msg = get_message("welcome_menu", "xx")
+    assert "BuildingResilience" in msg
+    assert "CAP 241" in msg
+
+
+def test_escalation_holding_french():
+    msg = get_message("escalation_holding", "fr")
+    assert "équipe" in msg.lower() or "equipe" in msg.lower()
+
+
+def test_escalation_holding_english():
+    msg = get_message("escalation_holding", "en")
+    assert "team" in msg.lower()
