@@ -12,6 +12,7 @@ from app.ai.history import save_message, load_history
 from app.ai.client import get_ai_response
 from app.rate_limit import check_rate_limit, rate_limit_message
 from app.broadcast.router import router as broadcast_router
+from app.escalation.router import router as escalation_router
 
 import logging
 
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 app.include_router(broadcast_router)
+app.include_router(escalation_router)
 
 
 @app.post("/message")
