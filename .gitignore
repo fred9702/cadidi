@@ -5,3 +5,13 @@ __pycache__/
 .idea/
 .python-version
 store/
+HOW_TO_BROADCAST.md
+
+# Ephemeral tool state
+.playwright-mcp/
+supabase/.temp/
+
+# Confidential source documents (content extracted into KB files only)
+PANELS 17 AVRIL RETENUS.docx
+Booklet Complete .pdf
+CAP 241.pdf

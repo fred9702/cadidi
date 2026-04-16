@@ -3,6 +3,9 @@ import time
 RATE_LIMIT_MAX_MESSAGES = 10
 RATE_LIMIT_WINDOW_SECONDS = 60
 
+# In-memory sliding window — correct for single-process deploys (Railway
+# default). If this app is ever scaled to multiple workers/replicas, move
+# this state to Supabase or Redis so limits are enforced globally.
 _message_log: dict[str, list[float]] = {}
 
 RATE_LIMIT_MESSAGES = {

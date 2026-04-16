@@ -1,8 +1,28 @@
 from app.consent.messages import get_message
 
 
-def test_unknown_message_is_french():
+def test_unknown_message_fr():
+    msg = get_message("unknown", "fr")
+    assert "réservé aux participants" in msg
+
+
+def test_unknown_message_en():
     msg = get_message("unknown", "en")
+    assert "reserved for registered" in msg
+
+
+def test_unknown_message_es():
+    msg = get_message("unknown", "es")
+    assert "reservado" in msg
+
+
+def test_unknown_message_pt():
+    msg = get_message("unknown", "pt")
+    assert "reservado" in msg
+
+
+def test_unknown_message_unknown_lang_falls_back_to_fr():
+    msg = get_message("unknown", "xx")
     assert "réservé aux participants" in msg
 
 

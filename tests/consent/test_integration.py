@@ -41,13 +41,14 @@ def test_registered_sender_gets_consent_prompt(mock_get_sb, mock_send):
     assert "Reply YES" in mock_send.call_args[0][1]
 
 
+@patch("main.get_open_escalation", return_value=None)
 @patch("main.send_whatsapp")
 @patch("main.get_supabase")
 @patch("main.get_ai_response")
 @patch("main.save_message")
 @patch("main.load_history")
 @patch("main.get_or_create_conversation")
-def test_active_sender_gets_ai_response(mock_conv, mock_history, mock_save, mock_ai, mock_get_sb, mock_send):
+def test_active_sender_gets_ai_response(mock_conv, mock_history, mock_save, mock_ai, mock_get_sb, mock_send, mock_open_esc):
     mock_get_sb.return_value = _mock_supabase_with_state(
         {"consent_status": "active", "language_pref": "en"}
     )
