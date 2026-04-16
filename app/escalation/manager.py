@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 
 from supabase import Client
 
+from app.escalation.notifier import notify_operators
+
 ESCALATIONS_TABLE = "wa_escalations"
 
 
@@ -12,7 +14,7 @@ def create_escalation(
     reason: str | None,
     user_message: str,
 ) -> None:
-    """Insert a new open escalation."""
+    """Insert a new open escalation and alert operators by email."""
     supabase.table(ESCALATIONS_TABLE).insert({
         "conversation_id": conversation_id,
         "phone_hash": phone_hash,
@@ -20,6 +22,7 @@ def create_escalation(
         "user_message": user_message,
         "status": "open",
     }).execute()
+    notify_operators(reason=reason, user_message=user_message, phone_hash=phone_hash)
 
 
 def get_open_escalation(supabase: Client, phone_hash: str) -> dict | None:

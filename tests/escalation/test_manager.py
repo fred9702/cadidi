@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from app.escalation.manager import create_escalation, get_open_escalation, resolve_escalation
 
 
@@ -7,7 +7,8 @@ def _mock_supabase():
     return sb
 
 
-def test_create_escalation_inserts_row():
+@patch("app.escalation.manager.notify_operators")
+def test_create_escalation_inserts_row(mock_notify):
     sb = _mock_supabase()
     sb.table.return_value.insert.return_value.execute.return_value = None
 
@@ -26,6 +27,28 @@ def test_create_escalation_inserts_row():
     assert insert_data["reason"] == "VIP request"
     assert insert_data["user_message"] == "I need help with my seat"
     assert insert_data["status"] == "open"
+
+
+@patch("app.escalation.manager.notify_operators")
+def test_create_escalation_calls_notifier(mock_notify):
+    sb = _mock_supabase()
+    sb.table.return_value.insert.return_value.execute.return_value = None
+
+    create_escalation(
+        sb,
+        conversation_id="conv-1",
+        phone_hash="hash-1",
+        reason="VIP",
+        user_message="Hello",
+    )
+
+    mock_notify.assert_called_once_with(
+        reason="VIP",
+        user_message="Hello",
+        phone_hash="hash-1",
+    )
+
+
 
 
 def test_get_open_escalation_returns_row():
