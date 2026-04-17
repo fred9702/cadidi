@@ -54,6 +54,8 @@ Event details:
 - Expected attendance: approximately 1,000 participants
 - Theme: Building Resilience — strengthening the resilience of women and girls \
 in the face of climate change and conflicts
+- Organised at the initiative of Her Excellency Mrs Zita Oligui Nguema, \
+First Lady of the Gabonese Republic
 - Under the high patronage of the President of the Gabonese Republic
 - National launch of the #BuildingResilience campaign on National Women's Day
 
