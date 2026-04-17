@@ -61,6 +61,20 @@ def test_process_active_normal_message():
     assert result["language"] == "en"
 
 
+def test_process_active_consent_keyword_idempotent():
+    sb = _mock_supabase(row={"consent_status": "active", "language_pref": "en"})
+    result = process_message(sb, "+447700900000", "YES")
+    assert result["action"] == "activate"
+    sb.table.return_value.update.assert_not_called()
+
+
+def test_process_active_consent_with_email_idempotent():
+    sb = _mock_supabase(row={"consent_status": "active", "language_pref": "fr"})
+    result = process_message(sb, "+447700900000", "OUI alice@example.com")
+    assert result["action"] == "activate"
+    sb.table.return_value.update.assert_not_called()
+
+
 def test_process_active_opt_out():
     sb = _mock_supabase(row={"consent_status": "active", "language_pref": "en"})
     sb.table.return_value.update.return_value.eq.return_value.execute.return_value = None
